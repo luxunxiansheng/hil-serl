@@ -1,3 +1,98 @@
+# Franka Server Architecture
+
+```mermaid
+
+graph TB
+    subgraph Main Process
+        A[Flask Web Server]
+        B[franka_control_api Node]
+        C[Gripper Server]
+        A --- B
+        B --- C
+    end
+    
+    subgraph ROS Core Process
+        D[ROS Master]
+    end
+    
+    subgraph Controller Process
+        E[cartesian_impedance_controller Node]
+        F[franka_state_controller Node]
+    end
+    
+    subgraph Gripper Process
+        G[Robotiq Node] --> |If Robotiq|C
+        H[Franka Gripper Node] --> |If Franka|C
+    end
+    
+    D --- B
+    D --- E
+    D --- F
+    D --- G
+    D --- H
+
+```
+
+## The relationship between gripper server and Franka gripper node
+
+```mermaid
+graph TD
+
+    subgraph Impedance Launch Process
+        C[franka_gripper_node]
+        D[franka_control_node]
+    end
+
+    subgraph Main Process
+        A[franka_control_api Node]
+        B[FrankaGripperServer]
+        A --> B
+    end
+    
+    B -->|publishes| E[/franka_gripper/move/goal/]
+    B -->|publishes| F[/franka_gripper/grasp/goal/]
+    C -->|provides| E
+    C -->|provides| F
+    C -->|publishes| G[/joint_states/]
+    B -->|subscribes| G
+    
+    style B fill:#e8f5e9,stroke:#1b5e20
+    style C fill:#e8f5e9,stroke:#1b5e20
+
+```
+------
+```mermaid
+
+graph TD
+    
+    subgraph Main Process ["Main Process (franka_control_api node)"]
+        A[Flask Web Server]
+        B[FrankaGripperServer<br/><i>client interface</i>]
+    end
+    
+
+    subgraph Impedance Launch Process
+        C[franka_gripper_node<br/><i>hardware control</i>]
+    end
+    
+    B -->|publishes| D[/franka_gripper/move/goal/]
+    B -->|publishes| E[/franka_gripper/grasp/goal/]
+    B -->|subscribes| F[/joint_states/]
+    C -->|provides| D
+    C -->|provides| E
+    C -->|publishes| F
+
+```
+
+
+
+
+
+
+
+
+
+
 ## Example: Moving the robot
 
 ### Scenario
